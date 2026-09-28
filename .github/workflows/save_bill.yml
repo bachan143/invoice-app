@@ -1,0 +1,28 @@
+name: Save Invoice Bill
+
+on:
+  repository_dispatch:
+    types: [save_bill]
+
+jobs:
+  commit-bill:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Save Invoice JSON
+        run: |
+          mkdir -p bills
+          FILENAME="bills/bill_${{ github.event.client_payload.billNo }}_${{ github.event.client_payload.timestamp }}.json"
+          echo '${{ toJson(github.event.client_payload) }}' > "$FILENAME"
+
+      - name: Commit and Push File
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add bills/
+          git commit -m "Auto-save bill #${{ github.event.client_payload.billNo }}"
+          git push
